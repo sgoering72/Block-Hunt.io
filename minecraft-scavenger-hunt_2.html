@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Scavenger Hunt Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(180deg, #87CEEB 0%, #98D8E8 50%, #7CB342 100%);
+    min-height: 100vh;
+    padding: 15px;
+    color: #2c2c2c;
+  }
+  
+  .container { max-width: 1300px; margin: 0 auto; }
+  
+  h1 {
+    text-align: center;
+    color: #fff;
+    font-size: 2.3em;
+    text-shadow: 3px 3px 0px #2c5f2d, 6px 6px 0px rgba(0,0,0,0.2);
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+  }
+  
+  .subtitle {
+    text-align: center;
+    color: #fff;
+    text-shadow: 2px 2px 0px #2c5f2d;
+    margin-bottom: 15px;
+    font-size: 1em;
+  }
+  
+  /* Login screen */
+  .login-screen {
+    max-width: 500px;
+    margin: 60px auto;
+    background: rgba(255,255,255,0.97);
+    border: 5px solid #5d4e37;
+    padding: 30px;
+    box-shadow: 8px 8px 0px rgba(0,0,0,0.3);
+  }
+  
+  .login-screen h2 {
+    color: #2c5f2d;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.6em;
+  }
+  
+  .login-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+  }
+  
+  .login-tab {
+    flex: 1;
+    background: #8B7355;
+    color: #fff;
+    border: 3px solid #5d4e37;
+    padding: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+  }
+  
+  .login-tab.active { background: #4CAF50; border-color: #2c5f2d; }
+  
+  .login-form { display: flex; flex-direction: column; gap: 12px; }
+  
+  .login-form label { color: #2c5f2d; font-weight: bold; }
+  
+  .login-form input {
+    padding: 12px;
+    border: 3px solid #5d4e37;
+    background: #f5f5dc;
+    font-family: inherit;
+    font-size: 1.1em;
+  }
+  
+  .login-form button {
+    margin-top: 10px;
+    padding: 15px;
+    font-size: 1.1em;
+  }
+  
+  .login-error {
+    background: #ffcdd2;
+    border: 2px solid #c62828;
+    color: #b71c1c;
+    padding: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  /* Top bar */
+  .user-bar {
+    background: rgba(255,255,255,0.95);
+    border: 3px solid #5d4e37;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    color: #2c5f2d;
+  }
+  
+  .user-badge {
+    background: #4CAF50;
+    color: white;
+    padding: 4px 12px;
+    border: 2px solid #2c5f2d;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.3);
+  }
+  
+  .user-badge.teacher { background: #9C27B0; border-color: #4A148C; }
+  
+  .sync-bar {
+    background: rgba(255,255,255,0.9);
+    border: 3px solid #5d4e37;
+    padding: 8px 15px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.9em;
+  }
+  
+  .sync-status { display: flex; align-items: center; gap: 8px; }
+  
+  .sync-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4CAF50;
+    box-shadow: 0 0 8px #4CAF50;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  .sync-dot.syncing { background: #FFA726; box-shadow: 0 0 8px #FFA726; }
+  .sync-dot.error { background: #c62828; box-shadow: 0 0 8px #c62828; animation: none; }
+  
+  .tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .tab {
+    background: #8B7355;
+    color: #fff;
+    border: 3px solid #5d4e37;
+    padding: 10px 18px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 0.95em;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+    transition: all 0.1s;
+  }
+  
+  .tab:hover { background: #A0826D; transform: translateY(-2px); }
+  .tab.active { background: #4CAF50; border-color: #2c5f2d; }
+  
+  .panel {
+    background: rgba(255, 255, 255, 0.95);
+    border: 4px solid #5d4e37;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+  }
+  
+  .panel h2 {
+    color: #2c5f2d;
+    margin-bottom: 15px;
+    border-bottom: 3px solid #8B7355;
+    padding-bottom: 8px;
+  }
+  
+  .hidden { display: none; }
+  
+  .form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    align-items: end;
+  }
+  
+  .form-group { flex: 1; min-width: 150px; }
+  
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #2c5f2d;
+  }
+  
+  input, select {
+    width: 100%;
+    padding: 10px;
+    border: 3px solid #5d4e37;
+    background: #f5f5dc;
+    font-family: inherit;
+    font-size: 1em;
+  }
+  
+  input:focus, select:focus { outline: none; border-color: #4CAF50; }
+  
+  button {
+    background: #4CAF50;
+    color: white;
+    border: 3px solid #2c5f2d;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 1em;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.3);
+    transition: all 0.1s;
+  }
+  
+  button:hover { background: #5BC85F; transform: translateY(-2px); }
+  button:active { transform: translateY(0); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  
+  button.danger { background: #c62828; border-color: #8b0000; }
+  button.danger:hover { background: #d63838; }
+  button.secondary { background: #1976D2; border-color: #0d47a1; }
+  button.secondary:hover { background: #2196F3; }
+  button.logout { background: #757575; border-color: #424242; }
+  button.logout:hover { background: #9e9e9e; }
+  
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  
+  th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 2px solid #d7c4a3;
+  }
+  
+  th {
+    background: #5d4e37;
+    color: white;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.3);
+  }
+  
+  tr:hover { background: #f5f5dc; }
+  
+  .points-cell { font-weight: bold; color: #2c5f2d; font-size: 1.1em; }
+  
+  .student-num {
+    font-family: monospace;
+    background: #f5f5dc;
+    padding: 2px 6px;
+    border: 1px solid #8B7355;
+  }
+  
+  .block-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .block-card {
+    background: #f5f5dc;
+    border: 3px solid #5d4e37;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .block-card .info { flex: 1; }
+  .block-card .name { font-weight: bold; color: #2c5f2d; }
+  
+  .block-card .points {
+    background: #FFD700;
+    border: 2px solid #B8860B;
+    padding: 2px 8px;
+    font-weight: bold;
+    margin-left: 5px;
+  }
+  
+  .delete-btn {
+    background: #c62828;
+    color: white;
+    border: 2px solid #8b0000;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+  }
+  
+  .entry-form {
+    background: #e8f5e9;
+    border: 3px solid #4CAF50;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  
+  .block-input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+  }
+  
+  .block-input {
+    background: white;
+    border: 2px solid #8B7355;
+    padding: 10px;
+  }
+  
+  .block-input label { font-size: 0.95em; margin-bottom: 5px; }
+  .block-input .pts-tag { color: #B8860B; font-weight: bold; font-size: 0.85em; }
+  .block-input input { padding: 6px; font-size: 1em; }
+  
+  /* Charts */
+  .stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-card {
+    background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+    color: white;
+    border: 4px solid #1b4d1c;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+  }
+  
+  .stat-card.gold { background: linear-gradient(135deg, #FFD700, #B8860B); border-color: #8B6914; }
+  .stat-card.blue { background: linear-gradient(135deg, #2196F3, #0d47a1); border-color: #082c66; }
+  .stat-card.purple { background: linear-gradient(135deg, #9C27B0, #4A148C); border-color: #2d0855; }
+  
+  .stat-card .label { font-size: 0.9em; text-shadow: 1px 1px 0px rgba(0,0,0,0.3); }
+  
+  .stat-card .value {
+    font-size: 2.2em;
+    font-weight: bold;
+    text-shadow: 3px 3px 0px rgba(0,0,0,0.3);
+    margin-top: 5px;
+  }
+  
+  .chart-container {
+    background: white;
+    border: 3px solid #5d4e37;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .chart-title {
+    font-weight: bold;
+    color: #2c5f2d;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+  }
+  
+  .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+  
+  .bar-row {
+    display: grid;
+    grid-template-columns: 150px 1fr 80px;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .bar-label {
+    font-weight: bold;
+    color: #2c2c2c;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .bar-row.me .bar-label { color: #c62828; }
+  .bar-row.me { background: #fff9c4; padding: 4px; border-radius: 4px; }
+  
+  .bar-track {
+    background: #f0f0f0;
+    border: 2px solid #5d4e37;
+    height: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #66BB6A);
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+    font-size: 0.85em;
+    min-width: 4px;
+  }
+  
+  .bar-fill.gold { background: linear-gradient(90deg, #FFD700, #FFA500); }
+  .bar-fill.silver { background: linear-gradient(90deg, #C0C0C0, #A0A0A0); }
+  .bar-fill.bronze { background: linear-gradient(90deg, #CD7F32, #8B4513); }
+  .bar-fill.blue { background: linear-gradient(90deg, #2196F3, #1976D2); }
+  
+  .bar-value {
+    font-weight: bold;
+    color: #2c5f2d;
+    text-align: right;
+  }
+  
+  .pie-container {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pie-svg { flex-shrink: 0; }
+  
+  .pie-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95em;
+  }
+  
+  .legend-color {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #5d4e37;
+    flex-shrink: 0;
+  }
+  
+  .legend-label { flex: 1; font-weight: bold; }
+  .legend-value { color: #2c5f2d; font-weight: bold; }
+  
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    background: #f5f5dc;
+    border: 3px solid #5d4e37;
+    padding: 12px;
+    margin-bottom: 8px;
+    gap: 15px;
+  }
+  
+  .leaderboard-item.me {
+    background: #fff9c4;
+    border-color: #c62828;
+    border-width: 4px;
+  }
+  
+  .rank {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #2c5f2d;
+    min-width: 60px;
+    text-align: center;
+  }
+  
+  .rank.gold { color: #FFD700; text-shadow: 2px 2px 0px #B8860B; }
+  .rank.silver { color: #C0C0C0; text-shadow: 2px 2px 0px #808080; }
+  .rank.bronze { color: #CD7F32; text-shadow: 2px 2px 0px #8B4513; }
+  
+  .player-info { flex: 1; }
+  
+  .player-name { font-size: 1.2em; font-weight: bold; color: #2c2c2c; }
+  .player-class { color: #666; font-size: 0.85em; }
+  
+  .player-score {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #2c5f2d;
+    background: #FFD700;
+    border: 3px solid #B8860B;
+    padding: 4px 12px;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
+  }
+  
+  .status-msg {
+    padding: 10px;
+    margin: 10px 0;
+    background: #c8e6c9;
+    border: 2px solid #4CAF50;
+    color: #2c5f2d;
+    font-weight: bold;
+  }
+  
+  .status-msg.error {
+    background: #ffcdd2;
+    border-color: #c62828;
+    color: #b71c1c;
+  }
+  
+  .student-detail {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f5f5dc;
+    border: 2px dashed #8B7355;
+  }
+  
+  .student-detail h4 { color: #2c5f2d; margin-bottom: 10px; }
+  
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px dotted #ccc;
+  }
+  
+  .loading { text-align: center; padding: 20px; color: #666; }
+  
+  .info-box {
+    background: #fff3cd;
+    border: 3px solid #FFA726;
+    padding: 12px;
+    margin-bottom: 15px;
+    color: #5d4e37;
+  }
+  
+  .me-banner {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border: 4px solid #B8860B;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+  }
+  
+  .me-banner h2 {
+    color: #2c5f2d;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
+  }
+  
+  .me-banner .score {
+    font-size: 3em;
+    font-weight: bold;
+    color: #2c5f2d;
+    text-shadow: 3px 3px 0px rgba(255,255,255,0.5);
+  }
+  
+  @media (max-width: 700px) {
+    .bar-row { grid-template-columns: 100px 1fr 60px; }
+    h1 { font-size: 1.6em; }
+    .tab { padding: 8px 12px; font-size: 0.85em; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-container">
+  <h1>⛏️ MINECRAFT SCAVENGER HUNT ⛏️</h1>
+  <p class="subtitle">Sign in to continue</p>
+  
+  <div class="login-screen">
+    <div class="login-tabs">
+      <div class="login-tab active" data-login="student" onclick="switchLoginTab('student')">👤 Student</div>
+      <div class="login-tab" data-login="teacher" onclick="switchLoginTab('teacher')">🍎 Teacher</div>
+    </div>
+    
+    <!-- Student login -->
+    <div id="student-login">
+      <h2>Student Sign In</h2>
+      <div id="login-error-student"></div>
+      <div class="login-form">
+        <label for="login-student-num">Your Student Number</label>
+        <input type="text" id="login-student-num" placeholder="e.g., 12345" autocomplete="off">
+        <button onclick="studentLogin()">🎮 Sign In</button>
+      </div>
+      <p style="margin-top: 15px; color: #666; font-size: 0.9em; text-align: center;">
+        Your teacher will give you your student number.
+      </p>
+    </div>
+    
+    <!-- Teacher login -->
+    <div id="teacher-login" class="hidden">
+      <h2>Teacher Sign In</h2>
+      <div id="login-error-teacher"></div>
+      <div class="login-form">
+        <label for="login-teacher-pwd">Teacher Password</label>
+        <input type="password" id="login-teacher-pwd" placeholder="Enter teacher password" autocomplete="off">
+        <button onclick="teacherLogin()">🔓 Sign In as Teacher</button>
+      </div>
+      <p style="margin-top: 15px; color: #666; font-size: 0.85em; text-align: center;">
+        First-time setup: pick a password and it will be saved.<br>
+        Default password is <strong>minecraft</strong> if no password is set yet.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-container" class="container hidden">
+  <h1>⛏️ MINECRAFT SCAVENGER HUNT ⛏️</h1>
+  <p class="subtitle">Track student progress and class totals</p>
+  
+  <div class="user-bar">
+    <div class="user-info">
+      <span class="user-badge" id="user-badge">Student</span>
+      <span id="user-name"></span>
+    </div>
+    <button class="logout" onclick="logout()">🚪 Sign Out</button>
+  </div>
+  
+  <div class="sync-bar">
+    <div class="sync-status">
+      <div id="sync-dot" class="sync-dot"></div>
+      <span id="sync-text">Connected — auto-syncing every 5s</span>
+    </div>
+    <button onclick="manualRefresh()" style="padding: 6px 12px; font-size: 0.85em;">🔄 Refresh Now</button>
+  </div>
+  
+  <div class="tabs" id="tabs-nav"></div>
+  
+  <div id="status-area"></div>
+  
+  <!-- MY SCORE TAB (students) -->
+  <div id="tab-myscore" class="tab-panel hidden">
+    <div id="myscore-content"></div>
+  </div>
+  
+  <!-- DASHBOARD TAB -->
+  <div id="tab-dashboard" class="tab-panel hidden">
+    <div id="dashboard-content"></div>
+  </div>
+  
+  <!-- ENTRY TAB -->
+  <div id="tab-entry" class="tab-panel hidden">
+    <div class="panel">
+      <h2 id="entry-heading">Log Your Finds</h2>
+      <div id="teacher-student-picker" class="hidden">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="entry-student">Student (Teacher Mode)</label>
+            <select id="entry-student">
+              <option value="">-- Select student --</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div id="entry-form-area">
+        <div class="entry-form">
+          <h3 style="color: #2c5f2d; margin-bottom: 10px;">Enter quantities of blocks collected:</h3>
+          <p style="color: #666; font-size: 0.9em;">Leave blank or enter 0 for blocks not collected. Submitting ADDS to existing totals.</p>
+          <div id="block-inputs" class="block-input-grid"></div>
+          <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onclick="submitEntry()">💾 Submit Entry</button>
+            <button class="secondary" onclick="clearEntryInputs()">↺ Clear Inputs</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- LEADERBOARD TAB -->
+  <div id="tab-leaderboard" class="tab-panel hidden">
+    <div class="panel">
+      <h2>🏆 Student Leaderboard</h2>
+      <div id="leaderboard-content"></div>
+    </div>
+  </div>
+  
+  <!-- CLASSES TAB -->
+  <div id="tab-classes" class="tab-panel hidden">
+    <div class="panel">
+      <h2>🏫 Class Totals</h2>
+      <div id="class-totals-content"></div>
+    </div>
+  </div>
+  
+  <!-- STUDENTS TAB (teacher only) -->
+  <div id="tab-students" class="tab-panel hidden">
+    <div class="panel">
+      <h2>Add Student</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="new-student-num">Student Number</label>
+          <input type="text" id="new-student-num" placeholder="e.g., 12345">
+        </div>
+        <div class="form-group">
+          <label for="new-student-name">Student Name</label>
+          <input type="text" id="new-student-name" placeholder="e.g., Alex Smith">
+        </div>
+        <div class="form-group">
+          <label for="new-student-class">Class</label>
+          <input type="text" id="new-student-class" placeholder="e.g., Period 3" list="class-list">
+          <datalist id="class-list"></datalist>
+        </div>
+        <button onclick="addStudent()">➕ Add Student</button>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <h2>All Students</h2>
+      <div id="students-list"></div>
+    </div>
+  </div>
+  
+  <!-- BLOCKS TAB (teacher only) -->
+  <div id="tab-blocks" class="tab-panel hidden">
+    <div class="panel">
+      <h2>Add Block Type</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="new-block-name">Block Name</label>
+          <input type="text" id="new-block-name" placeholder="e.g., Diamond Ore">
+        </div>
+        <div class="form-group">
+          <label for="new-block-points">Points Each</label>
+          <input type="number" id="new-block-points" placeholder="e.g., 10" min="0">
+        </div>
+        <button onclick="addBlock()">➕ Add Block</button>
+      </div>
+      <div style="margin-top: 10px;">
+        <button class="secondary" onclick="loadDefaultBlocks()">📦 Load Default Blocks</button>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <h2>Block Types</h2>
+      <div id="blocks-list"></div>
+    </div>
+  </div>
+  
+  <!-- SETTINGS TAB (teacher only) -->
+  <div id="tab-settings" class="tab-panel hidden">
+    <div class="panel">
+      <h2>⚙️ Teacher Settings</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="new-teacher-pwd">Change Teacher Password</label>
+          <input type="password" id="new-teacher-pwd" placeholder="New password (min 4 characters)">
+        </div>
+        <button onclick="changeTeacherPassword()">🔐 Update Password</button>
+      </div>
+      <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+        This password is shared across all teachers/admins using this app. Don't share it with students.
+      </p>
+    </div>
+    
+    <div class="panel">
+      <h2>⚠️ Danger Zone</h2>
+      <p style="color: #666; margin-bottom: 15px;">Reset everyone's block counts to zero but keep students and block types.</p>
+      <button class="danger" onclick="resetAllScores()">↺ Reset All Scores</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA STATE ============
+let data = {
+  students: [],
+  blocks: [],
+  teacherPassword: null  // null means default ("minecraft") applies
+};
+
+const STORAGE_KEY = 'mc_scavenger_data_v3';
+const SESSION_KEY = 'mc_scavenger_session';
+const POLL_INTERVAL = 5000;
+const DEFAULT_TEACHER_PWD = 'minecraft';
+const CHART_COLORS = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', '#00BCD4', '#FFC107', '#E91E63', '#3F51B5', '#009688', '#FF5722', '#795548'];
+
+let isSyncing = false;
+let pendingWrite = false;
+
+// Current user session
+let session = {
+  role: null,  // 'student' or 'teacher'
+  studentNum: null  // only set for students
+};
+
+// ============ STORAGE (SHARED) ============
+async function saveData() {
+  if (isSyncing) {
+    pendingWrite = true;
+    return;
+  }
+  isSyncing = true;
+  setSyncStatus('syncing');
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(data), true);
+    setSyncStatus('ok');
+  } catch (e) {
+    setSyncStatus('error');
+    showStatus('Error saving: ' + e.message, true);
+  } finally {
+    isSyncing = false;
+    if (pendingWrite) {
+      pendingWrite = false;
+      setTimeout(saveData, 100);
+    }
+  }
+}
+
+async function readRemote() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY, true);
+    if (result && result.value) {
+      return JSON.parse(result.value);
+    }
+  } catch (e) {
+    // Doesn't exist yet
+  }
+  return null;
+}
+
+async function loadData() {
+  const remote = await readRemote();
+  if (remote) {
+    data.students = remote.students || [];
+    data.blocks = remote.blocks || [];
+    data.teacherPassword = remote.teacherPassword || null;
+  }
+}
+
+async function pollUpdates() {
+  if (isSyncing) return;
+  try {
+    const remote = await readRemote();
+    if (remote) {
+      const remoteStr = JSON.stringify(remote);
+      const localStr = JSON.stringify(data);
+      if (remoteStr !== localStr) {
+        data.students = remote.students || [];
+        data.blocks = remote.blocks || [];
+        data.teacherPassword = remote.teacherPassword || null;
+        // If signed-in student got deleted, kick them out
+        if (session.role === 'student' && session.studentNum) {
+          if (!data.students.find(s => s.studentNum === session.studentNum)) {
+            logout();
+            return;
+          }
+        }
+        renderAll();
+      }
+    }
+    setSyncStatus('ok');
+  } catch (e) {
+    setSyncStatus('error');
+  }
+}
+
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  if (!dot) return;
+  dot.className = 'sync-dot';
+  if (status === 'syncing') {
+    dot.classList.add('syncing');
+    text.textContent = 'Syncing...';
+  } else if (status === 'error') {
+    dot.classList.add('error');
+    text.textContent = 'Connection error — retrying...';
+  } else {
+    text.textContent = 'Connected — auto-syncing every 5s';
+  }
+}
+
+async function manualRefresh() {
+  setSyncStatus('syncing');
+  await pollUpdates();
+  renderAll();
+}
+
+// ============ SESSION (LOCAL ONLY) ============
+async function saveSession() {
+  try {
+    await window.storage.set(SESSION_KEY, JSON.stringify(session), false);
+  } catch (e) { /* ignore */ }
+}
+
+async function loadSession() {
+  try {
+    const result = await window.storage.get(SESSION_KEY, false);
+    if (result && result.value) {
+      const parsed = JSON.parse(result.value);
+      if (parsed.role) session = parsed;
+    }
+  } catch (e) { /* no session */ }
+}
+
+async function clearSession() {
+  try {
+    await window.storage.delete(SESSION_KEY, false);
+  } catch (e) { /* ignore */ }
+}
+
+// ============ LOGIN ============
+function switchLoginTab(which) {
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.toggle('active', t.dataset.login === which));
+  document.getElementById('student-login').classList.toggle('hidden', which !== 'student');
+  document.getElementById('teacher-login').classList.toggle('hidden', which !== 'teacher');
+}
+
+function showLoginError(which, msg) {
+  const div = document.getElementById('login-error-' + which);
+  div.innerHTML = `<div class="login-error">${escapeHtml(msg)}</div>`;
+  setTimeout(() => { div.innerHTML = ''; }, 4000);
+}
+
+async function studentLogin() {
+  const num = document.getElementById('login-student-num').value.trim();
+  if (!num) {
+    showLoginError('student', 'Please enter your student number');
+    return;
+  }
+  // Always pull fresh data before checking
+  await loadData();
+  const student = data.students.find(s => s.studentNum === num);
+  if (!student) {
+    showLoginError('student', 'Student number not found. Ask your teacher.');
+    return;
+  }
+  session.role = 'student';
+  session.studentNum = num;
+  await saveSession();
+  enterApp();
+}
+
+async function teacherLogin() {
+  const pwd = document.getElementById('login-teacher-pwd').value;
+  if (!pwd) {
+    showLoginError('teacher', 'Please enter the teacher password');
+    return;
+  }
+  await loadData();
+  const expected = data.teacherPassword || DEFAULT_TEACHER_PWD;
+  if (pwd !== expected) {
+    showLoginError('teacher', 'Incorrect password');
+    return;
+  }
+  session.role = 'teacher';
+  session.studentNum = null;
+  await saveSession();
+  enterApp();
+}
+
+async function logout() {
+  session = { role: null, studentNum: null };
+  await clearSession();
+  document.getElementById('app-container').classList.add('hidden');
+  document.getElementById('login-container').classList.remove('hidden');
+  document.getElementById('login-student-num').value = '';
+  document.getElementById('login-teacher-pwd').value = '';
+}
+
+// ============ APP INIT ============
+async function enterApp() {
+  document.getElementById('login-container').classList.add('hidden');
+  document.getElementById('app-container').classList.remove('hidden');
+  
+  // Set up user bar
+  const badge = document.getElementById('user-badge');
+  const name = document.getElementById('user-name');
+  if (session.role === 'teacher') {
+    badge.textContent = '🍎 TEACHER';
+    badge.classList.add('teacher');
+    name.textContent = 'Admin Mode';
+  } else {
+    const student = data.students.find(s => s.studentNum === session.studentNum);
+    badge.textContent = '👤 STUDENT';
+    badge.classList.remove('teacher');
+    name.textContent = student ? `${student.name} (#${student.studentNum})` : '#' + session.studentNum;
+  }
+  
+  buildTabs();
+  await loadData();
+  renderAll();
+}
+
+function buildTabs() {
+  const nav = document.getElementById('tabs-nav');
+  let tabs;
+  if (session.role === 'teacher') {
+    tabs = [
+      { id: 'dashboard', label: '📊 Dashboard' },
+      { id: 'entry', label: '📝 Log Finds' },
+      { id: 'leaderboard', label: '🏆 Leaderboard' },
+      { id: 'classes', label: '🏫 Class Totals' },
+      { id: 'students', label: '👥 Students' },
+      { id: 'blocks', label: '🟫 Manage Blocks' },
+      { id: 'settings', label: '⚙️ Settings' }
+    ];
+  } else {
+    tabs = [
+      { id: 'myscore', label: '⭐ My Score' },
+      { id: 'entry', label: '📝 Log My Finds' },
+      { id: 'leaderboard', label: '🏆 Leaderboard' },
+      { id: 'classes', label: '🏫 Class Totals' }
+    ];
+  }
+  nav.innerHTML = tabs.map((t, i) =>
+    `<button class="tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`
+  ).join('');
+  // Show first tab
+  document.querySelectorAll('.tab-panel').forEach(x => x.classList.add('hidden'));
+  document.getElementById('tab-' + tabs[0].id).classList.remove('hidden');
+  
+  // Wire up clicks
+  nav.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      nav.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(x => x.classList.add('hidden'));
+      t.classList.add('active');
+      document.getElementById('tab-' + t.dataset.tab).classList.remove('hidden');
+      renderAll();
+    });
+  });
+  
+  // Set up entry tab UI for teacher vs student
+  if (session.role === 'teacher') {
+    document.getElementById('entry-heading').textContent = 'Log a Student\'s Finds (Teacher)';
+    document.getElementById('teacher-student-picker').classList.remove('hidden');
+    document.getElementById('entry-form-area').classList.add('hidden');
+  } else {
+    document.getElementById('entry-heading').textContent = 'Log My Finds';
+    document.getElementById('teacher-student-picker').classList.add('hidden');
+    document.getElementById('entry-form-area').classList.remove('hidden');
+  }
+}
+
+// ============ STATUS ============
+function showStatus(msg, isError = false) {
+  const area = document.getElementById('status-area');
+  const div = document.createElement('div');
+  div.className = 'status-msg' + (isError ? ' error' : '');
+  div.textContent = msg;
+  area.appendChild(div);
+  setTimeout(() => div.remove(), 3000);
+}
+
+// ============ TEACHER-ONLY: STUDENTS ============
+async function addStudent() {
+  if (session.role !== 'teacher') return;
+  const studentNum = document.getElementById('new-student-num').value.trim();
+  const name = document.getElementById('new-student-name').value.trim();
+  const className = document.getElementById('new-student-class').value.trim();
+  
+  if (!studentNum) { showStatus('Please enter a student number', true); return; }
+  if (!name) { showStatus('Please enter a student name', true); return; }
+  if (!className) { showStatus('Please enter a class name', true); return; }
+  
+  await pollUpdates();
+  
+  if (data.students.find(s => s.studentNum === studentNum)) {
+    showStatus(`Student number ${studentNum} is already taken`, true);
+    return;
+  }
+  
+  data.students.push({
+    studentNum,
+    name,
+    className,
+    blocks: {}
+  });
+  
+  document.getElementById('new-student-num').value = '';
+  document.getElementById('new-student-name').value = '';
+  document.getElementById('new-student-class').value = '';
+  
+  await saveData();
+  showStatus(`Added ${name} (#${studentNum}) to ${className}`);
+  renderAll();
+}
+
+async function deleteStudent(studentNum) {
+  if (session.role !== 'teacher') return;
+  const student = data.students.find(s => s.studentNum === studentNum);
+  if (!student) return;
+  if (!confirm(`Delete ${student.name} (#${studentNum})? This removes all their data.`)) return;
+  data.students = data.students.filter(s => s.studentNum !== studentNum);
+  await saveData();
+  showStatus(`Deleted ${student.name}`);
+  renderAll();
+}
+
+async function resetStudent(studentNum) {
+  if (session.role !== 'teacher') return;
+  const student = data.students.find(s => s.studentNum === studentNum);
+  if (!student) return;
+  if (!confirm(`Reset all block counts for ${student.name}?`)) return;
+  student.blocks = {};
+  await saveData();
+  showStatus(`Reset counts for ${student.name}`);
+  renderAll();
+}
+
+async function resetAllScores() {
+  if (session.role !== 'teacher') return;
+  if (!confirm('Reset ALL student scores to zero? Students and blocks will be kept. This cannot be undone.')) return;
+  if (!confirm('Are you really sure? Last chance!')) return;
+  data.students.forEach(s => s.blocks = {});
+  await saveData();
+  showStatus('All scores reset');
+  renderAll();
+}
+
+// ============ TEACHER-ONLY: BLOCKS ============
+async function addBlock() {
+  if (session.role !== 'teacher') return;
+  const name = document.getElementById('new-block-name').value.trim();
+  const points = parseInt(document.getElementById('new-block-points').value);
+  
+  if (!name) { showStatus('Please enter a block name', true); return; }
+  if (isNaN(points) || points < 0) { showStatus('Please enter a valid point value', true); return; }
+  
+  await pollUpdates();
+  
+  data.blocks.push({
+    id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    name,
+    points
+  });
+  
+  document.getElementById('new-block-name').value = '';
+  document.getElementById('new-block-points').value = '';
+  
+  await saveData();
+  showStatus(`Added ${name} (${points} pts each)`);
+  renderAll();
+}
+
+async function deleteBlock(id) {
+  if (session.role !== 'teacher') return;
+  const block = data.blocks.find(b => b.id === id);
+  if (!block) return;
+  if (!confirm(`Delete ${block.name}? Student counts for this block will be removed.`)) return;
+  data.blocks = data.blocks.filter(b => b.id !== id);
+  data.students.forEach(s => { delete s.blocks[id]; });
+  await saveData();
+  showStatus(`Deleted ${block.name}`);
+  renderAll();
+}
+
+async function loadDefaultBlocks() {
+  if (session.role !== 'teacher') return;
+  if (data.blocks.length > 0) {
+    if (!confirm('You already have blocks. Add the default set anyway?')) return;
+  }
+  await pollUpdates();
+  const defaults = [
+    { name: 'Dirt', points: 1 },
+    { name: 'Cobblestone', points: 1 },
+    { name: 'Wood', points: 2 },
+    { name: 'Coal Ore', points: 3 },
+    { name: 'Iron Ore', points: 5 },
+    { name: 'Gold Ore', points: 8 },
+    { name: 'Redstone Ore', points: 6 },
+    { name: 'Lapis Lazuli Ore', points: 7 },
+    { name: 'Diamond Ore', points: 15 },
+    { name: 'Emerald Ore', points: 20 },
+    { name: 'Ancient Debris', points: 25 },
+    { name: 'Obsidian', points: 10 }
+  ];
+  defaults.forEach((d, i) => {
+    data.blocks.push({
+      id: 'b_' + Date.now() + '_' + i,
+      ...d
+    });
+  });
+  await saveData();
+  showStatus('Loaded default blocks');
+  renderAll();
+}
+
+// ============ TEACHER PASSWORD ============
+async function changeTeacherPassword() {
+  if (session.role !== 'teacher') return;
+  const pwd = document.getElementById('new-teacher-pwd').value;
+  if (!pwd || pwd.length < 4) {
+    showStatus('Password must be at least 4 characters', true);
+    return;
+  }
+  await pollUpdates();
+  data.teacherPassword = pwd;
+  await saveData();
+  document.getElementById('new-teacher-pwd').value = '';
+  showStatus('Teacher password updated');
+}
+
+// ============ ENTRY ============
+const entryStudentSelect = document.getElementById('entry-student');
+if (entryStudentSelect) {
+  entryStudentSelect.addEventListener('change', (e) => {
+    const num = e.target.value;
+    if (!num) {
+      document.getElementById('entry-form-area').classList.add('hidden');
+      return;
+    }
+    renderEntryForm();
+    document.getElementById('entry-form-area').classList.remove('hidden');
+  });
+}
+
+function getActiveEntryStudent() {
+  if (session.role === 'teacher') {
+    const num = document.getElementById('entry-student').value;
+    return num ? data.students.find(s => s.studentNum === num) : null;
+  } else {
+    return data.students.find(s => s.studentNum === session.studentNum);
+  }
+}
+
+function renderEntryForm() {
+  const container = document.getElementById('block-inputs');
+  if (data.blocks.length === 0) {
+    container.innerHTML = '<p style="color:#666; padding: 15px;">No block types defined yet. Ask your teacher to add them.</p>';
+    return;
+  }
+  container.innerHTML = data.blocks.map(b => `
+    <div class="block-input">
+      <label>
+        ${escapeHtml(b.name)}
+        <span class="pts-tag">(${b.points} pts each)</span>
+      </label>
+      <input type="number" min="0" data-block-id="${b.id}" placeholder="0">
+    </div>
+  `).join('');
+}
+
+function clearEntryInputs() {
+  document.querySelectorAll('#block-inputs input').forEach(i => i.value = '');
+}
+
+async function submitEntry() {
+  await pollUpdates();
+  
+  const student = getActiveEntryStudent();
+  if (!student) {
+    showStatus('No student selected', true);
+    return;
+  }
+  
+  // Extra safety: students can only edit themselves
+  if (session.role === 'student' && student.studentNum !== session.studentNum) {
+    showStatus('You can only update your own score', true);
+    return;
+  }
+  
+  let addedSomething = false;
+  let pointsAdded = 0;
+  
+  document.querySelectorAll('#block-inputs input').forEach(input => {
+    const val = parseInt(input.value);
+    if (!isNaN(val) && val > 0) {
+      const blockId = input.dataset.blockId;
+      const block = data.blocks.find(b => b.id === blockId);
+      if (block) {
+        student.blocks[blockId] = (student.blocks[blockId] || 0) + val;
+        pointsAdded += val * block.points;
+        addedSomething = true;
+      }
+    }
+  });
+  
+  if (!addedSomething) {
+    showStatus('No quantities entered', true);
+    return;
+  }
+  
+  await saveData();
+  clearEntryInputs();
+  showStatus(`Added ${pointsAdded} points to ${student.name}!`);
+  renderAll();
+}
+
+// ============ CALCULATIONS ============
+function studentTotal(student) {
+  let total = 0;
+  for (const blockId in student.blocks) {
+    const block = data.blocks.find(b => b.id === blockId);
+    if (block) total += student.blocks[blockId] * block.points;
+  }
+  return total;
+}
+
+function classTotals() {
+  const totals = {};
+  data.students.forEach(s => {
+    if (!totals[s.className]) {
+      totals[s.className] = { total: 0, count: 0 };
+    }
+    totals[s.className].total += studentTotal(s);
+    totals[s.className].count++;
+  });
+  return totals;
+}
+
+function blockTotals() {
+  const totals = {};
+  data.blocks.forEach(b => { totals[b.id] = { block: b, count: 0, points: 0 }; });
+  data.students.forEach(s => {
+    for (const bid in s.blocks) {
+      if (totals[bid]) {
+        totals[bid].count += s.blocks[bid];
+        totals[bid].points += s.blocks[bid] * totals[bid].block.points;
+      }
+    }
+  });
+  return totals;
+}
+
+// ============ MY SCORE (student view) ============
+function renderMyScore() {
+  const container = document.getElementById('myscore-content');
+  if (!container) return;
+  const me = data.students.find(s => s.studentNum === session.studentNum);
+  if (!me) {
+    container.innerHTML = '<div class="empty-state">Student record not found.</div>';
+    return;
+  }
+  const total = studentTotal(me);
+  const totalBlocks = Object.values(me.blocks).reduce((a, b) => a + b, 0);
+  
+  // Rank
+  const sorted = [...data.students]
+    .map(s => ({ ...s, total: studentTotal(s) }))
+    .sort((a, b) => b.total - a.total);
+  const myRank = sorted.findIndex(s => s.studentNum === session.studentNum) + 1;
+  
+  // Class rank
+  const classmates = sorted.filter(s => s.className === me.className);
+  const myClassRank = classmates.findIndex(s => s.studentNum === session.studentNum) + 1;
+  
+  let html = `
+    <div class="me-banner">
+      <h2>Hi, ${escapeHtml(me.name)}!</h2>
+      <div style="color: #5d4e37; font-size: 1.1em; margin-bottom: 10px;">${escapeHtml(me.className)} • Student #${escapeHtml(me.studentNum)}</div>
+      <div class="score">${total}</div>
+      <div style="color: #5d4e37; margin-top: 5px; font-weight: bold;">TOTAL POINTS</div>
+    </div>
+    
+    <div class="stat-cards">
+      <div class="stat-card blue">
+        <div class="label">YOUR RANK</div>
+        <div class="value">#${myRank}</div>
+        <div style="font-size: 0.85em; margin-top: 5px;">of ${sorted.length} students</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="label">CLASS RANK</div>
+        <div class="value">#${myClassRank}</div>
+        <div style="font-size: 0.85em; margin-top: 5px;">in ${escapeHtml(me.className)}</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="label">BLOCKS COLLECTED</div>
+        <div class="value">${totalBlocks}</div>
+      </div>
+    </div>
+  `;
+  
+  // Breakdown of my blocks
+  const myBlocks = Object.entries(me.blocks)
+    .map(([bid, count]) => {
+      const block = data.blocks.find(b => b.id === bid);
+      return block ? { block, count, points: count * block.points } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.points - a.points);
+  
+  if (myBlocks.length > 0) {
+    const max = myBlocks[0].points;
+    html += `
+      <div class="chart-container">
+        <div class="chart-title">📦 Your Block Collection</div>
+        <div class="bar-chart">
+          ${myBlocks.map(b => {
+            const pct = max > 0 ? (b.points / max * 100) : 0;
+            return `
+              <div class="bar-row">
+                <div class="bar-label">${escapeHtml(b.block.name)} × ${b.count}</div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: ${pct}%;">${b.points}</div>
+                </div>
+                <div class="bar-value">${b.points} pts</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } else {
+    html += '<div class="panel"><div class="empty-state">You haven\'t logged any finds yet. Go to "Log My Finds" to start!</div></div>';
+  }
+  
+  container.innerHTML = html;
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+  const container = document.getElementById('dashboard-content');
+  if (!container) return;
+  
+  const totalStudents = data.students.length;
+  const totalClasses = new Set(data.students.map(s => s.className)).size;
+  const grandTotal = data.students.reduce((sum, s) => sum + studentTotal(s), 0);
+  const totalBlocks = data.students.reduce((sum, s) => {
+    return sum + Object.values(s.blocks).reduce((a, b) => a + b, 0);
+  }, 0);
+  
+  let html = `
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="label">TOTAL POINTS</div>
+        <div class="value">${grandTotal}</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="label">BLOCKS COLLECTED</div>
+        <div class="value">${totalBlocks}</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="label">STUDENTS</div>
+        <div class="value">${totalStudents}</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="label">CLASSES</div>
+        <div class="value">${totalClasses}</div>
+      </div>
+    </div>
+  `;
+  
+  const sortedStudents = [...data.students]
+    .map(s => ({ ...s, total: studentTotal(s) }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+  
+  if (sortedStudents.length > 0 && sortedStudents[0].total > 0) {
+    const max = sortedStudents[0].total;
+    html += `
+      <div class="chart-container">
+        <div class="chart-title">🏆 Top Students (Top 10)</div>
+        <div class="bar-chart">
+          ${sortedStudents.map((s, i) => {
+            const pct = max > 0 ? (s.total / max * 100) : 0;
+            const barClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            return `
+              <div class="bar-row">
+                <div class="bar-label">${escapeHtml(s.name)}</div>
+                <div class="bar-track">
+                  <div class="bar-fill ${barClass}" style="width: ${pct}%;">${s.total > 0 ? s.total : ''}</div>
+                </div>
+                <div class="bar-value">${s.total} pts</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  const classes = classTotals();
+  const classEntries = Object.entries(classes).sort((a, b) => b[1].total - a[1].total);
+  
+  if (classEntries.length > 0) {
+    const max = classEntries[0][1].total;
+    html += `
+      <div class="chart-container">
+        <div class="chart-title">🏫 Class Competition</div>
+        <div class="bar-chart">
+          ${classEntries.map(([cls, info], i) => {
+            const pct = max > 0 ? (info.total / max * 100) : 0;
+            const barClass = i === 0 ? 'gold' : 'blue';
+            return `
+              <div class="bar-row">
+                <div class="bar-label">${escapeHtml(cls)}</div>
+                <div class="bar-track">
+                  <div class="bar-fill ${barClass}" style="width: ${pct}%;">${info.total > 0 ? info.total : ''}</div>
+                </div>
+                <div class="bar-value">${info.total} pts</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  const blockData = blockTotals();
+  const blockEntries = Object.values(blockData)
+    .filter(b => b.count > 0)
+    .sort((a, b) => b.points - a.points);
+  
+  if (blockEntries.length > 0) {
+    const totalBlockPoints = blockEntries.reduce((sum, b) => sum + b.points, 0);
+    html += `
+      <div class="chart-container">
+        <div class="chart-title">🟫 Points by Block Type</div>
+        <div class="pie-container">
+          ${renderPieChart(blockEntries, totalBlockPoints)}
+        </div>
+      </div>
+    `;
+  }
+  
+  if (totalStudents === 0) {
+    html += '<div class="panel"><div class="empty-state">🎮 No students yet. Add them in the Students tab.</div></div>';
+  }
+  
+  container.innerHTML = html;
+}
+
+function renderPieChart(entries, total) {
+  const size = 220;
+  const radius = 100;
+  const cx = size / 2;
+  const cy = size / 2;
+  
+  if (total === 0) return '<div class="empty-state">No blocks collected yet.</div>';
+  
+  let currentAngle = -Math.PI / 2;
+  const paths = [];
+  const legend = [];
+  
+  entries.forEach((entry, i) => {
+    const pct = entry.points / total;
+    const angle = pct * 2 * Math.PI;
+    const endAngle = currentAngle + angle;
+    
+    const x1 = cx + radius * Math.cos(currentAngle);
+    const y1 = cy + radius * Math.sin(currentAngle);
+    const x2 = cx + radius * Math.cos(endAngle);
+    const y2 = cy + radius * Math.sin(endAngle);
+    
+    const largeArc = angle > Math.PI ? 1 : 0;
+    const color = CHART_COLORS[i % CHART_COLORS.length];
+    
+    let path;
+    if (entries.length === 1) {
+      path = `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${color}" stroke="#5d4e37" stroke-width="2"/>`;
+    } else {
+      path = `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${color}" stroke="#5d4e37" stroke-width="2"/>`;
+    }
+    paths.push(path);
+    
+    legend.push(`
+      <div class="legend-item">
+        <div class="legend-color" style="background: ${color};"></div>
+        <div class="legend-label">${escapeHtml(entry.block.name)}</div>
+        <div class="legend-value">${entry.points} pts (${(pct * 100).toFixed(0)}%)</div>
+      </div>
+    `);
+    
+    currentAngle = endAngle;
+  });
+  
+  return `
+    <svg class="pie-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      ${paths.join('')}
+    </svg>
+    <div class="pie-legend">
+      ${legend.join('')}
+    </div>
+  `;
+}
+
+// ============ RENDERING ============
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+function renderStudentDropdown() {
+  const select = document.getElementById('entry-student');
+  if (!select) return;
+  const current = select.value;
+  const sorted = [...data.students].sort((a, b) => {
+    if (a.className !== b.className) return a.className.localeCompare(b.className);
+    return a.name.localeCompare(b.name);
+  });
+  select.innerHTML = '<option value="">-- Select student --</option>' +
+    sorted.map(s => `<option value="${escapeHtml(s.studentNum)}">${escapeHtml(s.name)} (#${escapeHtml(s.studentNum)}) — ${escapeHtml(s.className)}</option>`).join('');
+  if (current && data.students.find(s => s.studentNum === current)) {
+    select.value = current;
+  }
+}
+
+function renderClassDatalist() {
+  const dl = document.getElementById('class-list');
+  if (!dl) return;
+  const classes = [...new Set(data.students.map(s => s.className))];
+  dl.innerHTML = classes.map(c => `<option value="${escapeHtml(c)}">`).join('');
+}
+
+function renderLeaderboard() {
+  const container = document.getElementById('leaderboard-content');
+  if (!container) return;
+  if (data.students.length === 0) {
+    container.innerHTML = '<div class="empty-state">No students yet.</div>';
+    return;
+  }
+  const sorted = [...data.students]
+    .map(s => ({ ...s, total: studentTotal(s) }))
+    .sort((a, b) => b.total - a.total);
+  
+  const maxScore = sorted[0]?.total || 1;
+  let html = '';
+  
+  if (sorted[0].total > 0) {
+    html += `
+      <div class="chart-container">
+        <div class="chart-title">📊 Score Distribution</div>
+        <div class="bar-chart">
+          ${sorted.map((s, i) => {
+            const pct = maxScore > 0 ? (s.total / maxScore * 100) : 0;
+            const barClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            const meClass = (session.role === 'student' && s.studentNum === session.studentNum) ? ' me' : '';
+            return `
+              <div class="bar-row${meClass}">
+                <div class="bar-label">${escapeHtml(s.name)}${meClass ? ' ⭐' : ''}</div>
+                <div class="bar-track">
+                  <div class="bar-fill ${barClass}" style="width: ${pct}%;">${s.total > 0 ? s.total : ''}</div>
+                </div>
+                <div class="bar-value">${s.total} pts</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  html += sorted.map((s, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+    const meClass = (session.role === 'student' && s.studentNum === session.studentNum) ? ' me' : '';
+    return `
+      <div class="leaderboard-item${meClass}">
+        <div class="rank ${rankClass}">${medal}</div>
+        <div class="player-info">
+          <div class="player-name">${escapeHtml(s.name)}${meClass ? ' ⭐ (You)' : ''}</div>
+          <div class="player-class">${escapeHtml(s.className)}</div>
+        </div>
+        <div class="player-score">${s.total} pts</div>
+      </div>
+    `;
+  }).join('');
+  
+  container.innerHTML = html;
+}
+
+function renderClassTotals() {
+  const container = document.getElementById('class-totals-content');
+  if (!container) return;
+  const totals = classTotals();
+  const entries = Object.entries(totals).sort((a, b) => b[1].total - a[1].total);
+  
+  if (entries.length === 0) {
+    container.innerHTML = '<div class="empty-state">No classes yet.</div>';
+    return;
+  }
+  
+  const max = entries[0][1].total;
+  const myClass = session.role === 'student' ? data.students.find(s => s.studentNum === session.studentNum)?.className : null;
+  
+  let html = '<div class="stat-cards">';
+  entries.forEach(([cls, info], i) => {
+    const cardClass = i === 0 ? 'gold' : i === 1 ? '' : i === 2 ? 'blue' : 'purple';
+    const isMine = cls === myClass ? ' ⭐' : '';
+    html += `
+      <div class="stat-card ${cardClass}">
+        <div class="label">${i === 0 ? '🏆 ' : ''}${escapeHtml(cls)}${isMine}</div>
+        <div class="value">${info.total}</div>
+        <div style="font-size: 0.85em; margin-top: 5px; opacity: 0.9;">
+          ${info.count} student${info.count !== 1 ? 's' : ''} • avg ${Math.round(info.total / info.count)} pts
+        </div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  
+  if (max > 0) {
+    html += `
+      <div class="chart-container">
+        <div class="chart-title">📊 Class Comparison</div>
+        <div class="bar-chart">
+          ${entries.map(([cls, info]) => {
+            const pct = max > 0 ? (info.total / max * 100) : 0;
+            const barClass = cls === myClass ? 'gold' : 'blue';
+            const meTag = cls === myClass ? ' ⭐' : '';
+            return `
+              <div class="bar-row">
+                <div class="bar-label">${escapeHtml(cls)}${meTag}</div>
+                <div class="bar-track">
+                  <div class="bar-fill ${barClass}" style="width: ${pct}%;">${info.total > 0 ? info.total : ''}</div>
+                </div>
+                <div class="bar-value">${info.total} pts</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  entries.forEach(([cls]) => {
+    const classStudents = data.students
+      .filter(s => s.className === cls)
+      .map(s => ({ ...s, total: studentTotal(s) }))
+      .sort((a, b) => b.total - a.total);
+    
+    const classMax = classStudents[0]?.total || 1;
+    
+    html += `
+      <div class="chart-container">
+        <div class="chart-title">${escapeHtml(cls)} — Student Breakdown</div>
+        <div class="bar-chart">
+          ${classStudents.map((s, i) => {
+            const pct = classMax > 0 ? (s.total / classMax * 100) : 0;
+            const barClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            const meClass = (session.role === 'student' && s.studentNum === session.studentNum) ? ' me' : '';
+            return `
+              <div class="bar-row${meClass}">
+                <div class="bar-label">${escapeHtml(s.name)}${meClass ? ' ⭐' : ''}</div>
+                <div class="bar-track">
+                  <div class="bar-fill ${barClass}" style="width: ${pct}%;">${s.total > 0 ? s.total : ''}</div>
+                </div>
+                <div class="bar-value">${s.total} pts</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+
+function renderStudentsList() {
+  const container = document.getElementById('students-list');
+  if (!container) return;
+  if (data.students.length === 0) {
+    container.innerHTML = '<div class="empty-state">No students yet.</div>';
+    return;
+  }
+  const sorted = [...data.students].sort((a, b) => {
+    if (a.className !== b.className) return a.className.localeCompare(b.className);
+    return a.name.localeCompare(b.name);
+  });
+  
+  let html = '<table><thead><tr><th>#</th><th>Name</th><th>Class</th><th>Total</th><th>Actions</th></tr></thead><tbody>';
+  sorted.forEach(s => {
+    const total = studentTotal(s);
+    const blockDetails = Object.entries(s.blocks)
+      .map(([bid, count]) => {
+        const block = data.blocks.find(b => b.id === bid);
+        return block ? `<div class="detail-row"><span>${escapeHtml(block.name)} × ${count}</span><span>${count * block.points} pts</span></div>` : '';
+      }).filter(Boolean).join('');
+    
+    html += `
+      <tr>
+        <td><span class="student-num">${escapeHtml(s.studentNum)}</span></td>
+        <td><strong>${escapeHtml(s.name)}</strong></td>
+        <td>${escapeHtml(s.className)}</td>
+        <td class="points-cell">${total}</td>
+        <td>
+          <button onclick="toggleDetail('${escapeHtml(s.studentNum)}')" class="secondary" style="padding: 6px 10px; font-size: 0.85em;">📊</button>
+          <button onclick="resetStudent('${escapeHtml(s.studentNum)}')" style="padding: 6px 10px; font-size: 0.85em;">↺</button>
+          <button onclick="deleteStudent('${escapeHtml(s.studentNum)}')" class="danger" style="padding: 6px 10px; font-size: 0.85em;">✕</button>
+        </td>
+      </tr>
+      <tr id="detail-row-${escapeHtml(s.studentNum)}" class="hidden">
+        <td colspan="5">
+          <div class="student-detail">
+            <h4>Block Breakdown for ${escapeHtml(s.name)}</h4>
+            ${blockDetails || '<p style="color:#666;">No blocks collected yet</p>'}
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function toggleDetail(num) {
+  const row = document.getElementById('detail-row-' + num);
+  if (row) row.classList.toggle('hidden');
+}
+
+function renderBlocksList() {
+  const container = document.getElementById('blocks-list');
+  if (!container) return;
+  if (data.blocks.length === 0) {
+    container.innerHTML = '<div class="empty-state">No block types yet. Add some or click "Load Default Blocks"!</div>';
+    return;
+  }
+  const sorted = [...data.blocks].sort((a, b) => a.points - b.points);
+  container.innerHTML = '<div class="block-grid">' +
+    sorted.map(b => `
+      <div class="block-card">
+        <div class="info">
+          <div class="name">${escapeHtml(b.name)}</div>
+          <span class="points">${b.points} pts</span>
+        </div>
+        <button class="delete-btn" onclick="deleteBlock('${b.id}')">✕</button>
+      </div>
+    `).join('') + '</div>';
+}
+
+function renderAll() {
+  if (session.role === 'teacher') {
+    renderStudentDropdown();
+    renderClassDatalist();
+    renderDashboard();
+    renderStudentsList();
+    renderBlocksList();
+  } else {
+    renderMyScore();
+    // Pre-fill entry form
+    if (data.blocks.length > 0) renderEntryForm();
+    else document.getElementById('block-inputs').innerHTML = '<p style="color:#666; padding: 15px;">No block types defined yet. Ask your teacher.</p>';
+  }
+  renderLeaderboard();
+  renderClassTotals();
+}
+
+// ============ INIT ============
+(async function init() {
+  await loadSession();
+  await loadData();
+  
+  if (session.role === 'student') {
+    // Verify the student still exists
+    const stillExists = data.students.find(s => s.studentNum === session.studentNum);
+    if (!stillExists) {
+      session = { role: null, studentNum: null };
+      await clearSession();
+    }
+  }
+  
+  if (session.role) {
+    await enterApp();
+  } else {
+    document.getElementById('login-container').classList.remove('hidden');
+  }
+  
+  // Enter key triggers login
+  document.getElementById('login-student-num').addEventListener('keydown', e => {
+    if (e.key === 'Enter') studentLogin();
+  });
+  document.getElementById('login-teacher-pwd').addEventListener('keydown', e => {
+    if (e.key === 'Enter') teacherLogin();
+  });
+  
+  // Background polling
+  setInterval(() => {
+    if (session.role) pollUpdates();
+  }, POLL_INTERVAL);
+})();
+</script>
+</body>
+</html>
